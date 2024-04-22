@@ -4,52 +4,56 @@ import './App.css';
 function App() {
   const [caption, setCaption] = useState('');
   const videoRef = useRef(null);
-  const peerConnection = useRef(null);
-  const dataChannel = useRef(null);
+  const intervalRef = useRef(null);
 
   useEffect(() => {
-    async function setupWebRTC() {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      videoRef.current.srcObject = stream;
+    // カメラの映像を取得する
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        videoRef.current.srcObject = stream;
+      })
+      .catch(console.error);
 
-      // RTCPeerConnection を初期化
-      peerConnection.current = new RTCPeerConnection();
+    // 5秒ごとにキャプションを更新する
+    intervalRef.current = setInterval(() => {
+      generateCaption();
+    }, 5000);
 
-      // メディアトラックを追加
-      stream.getTracks().forEach(track => peerConnection.current.addTrack(track, stream));
-
-      // データチャネルの設定
-      dataChannel.current = peerConnection.current.createDataChannel("captionChannel");
-      dataChannel.current.onmessage = (event) => {
-        setCaption(event.data);
-      };
-
-      // オファーを作成して送信
-      const offer = await peerConnection.current.createOffer();
-      await peerConnection.current.setLocalDescription(offer);
-
-      const response = await fetch('http://localhost:8080/offer', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          sdp: peerConnection.current.localDescription.sdp,
-          type: peerConnection.current.localDescription.type
-        })
-      });
-
-      const { sdp, type } = await response.json();
-      await peerConnection.current.setRemoteDescription(new RTCSessionDescription({ sdp, type }));
-    }
-
-    setupWebRTC();
-
+    // クリーンアップ関数
     return () => {
-      // コンポーネントアンマウント時のクリーンアップ
-      peerConnection.current?.close();
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+      const tracks = videoRef.current.srcObject?.getTracks();
+      tracks?.forEach(track => track.stop());
     };
   }, []);
+
+  // キャプションを生成する関数
+  const generateCaption = async () => {
+    if (!videoRef.current) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+    const imageBlob = await new Promise(res => canvas.toBlob(res));
+
+    const formData = new FormData();
+    formData.append('file', imageBlob, 'capture.jpg');
+
+    // キャプション生成エンドポイントにPOSTリクエストを送信
+    fetch('http://localhost:8080/gencap/en', { // または '/gencap/ja' に変更して日本語のキャプションを生成
+      method: 'POST',
+      body: formData
+    })
+      .then(response => response.json())
+      .then(data => {
+        setCaption(data.caption);
+      })
+      .catch(console.error);
+  };
 
   return (
     <div className="App">
