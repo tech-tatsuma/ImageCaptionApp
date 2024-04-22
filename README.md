@@ -7,4 +7,5 @@ docker-compose up --build
 そのあと
 - client: http://localhost:3000
 - server: http://localhost:8080
+
 にアプリケーションが立ち上がります．
