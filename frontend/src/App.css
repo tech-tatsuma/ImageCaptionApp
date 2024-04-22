@@ -1,0 +1,45 @@
+.App {
+  text-align: center;
+  background-color: #f5f5dc; /* ベージュの背景色 */
+}
+
+.App-header {
+  background-color: transparent;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: #333;
+}
+
+.App-title {
+  font-style: italic;
+  color: #6b705c; /* ダークカーキ色でスタイリッシュな見た目 */
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.App-video {
+  width: 50%; /* 動画のビューアーの幅を50%に設定 */
+  border-radius: 10px;
+  margin: 20px;
+  border: 2px solid #ccc; /* 境界線を追加 */
+}
+
+.App-caption {
+  width: 50%; /* キャプションの幅を動画ビューアーと同じ50%に設定 */
+  height: 50px;
+  border-radius: 10px;
+  margin: 10px;
+  padding: 10px;
+  background-color: #fff; /* 背景色を白に */
+  color: #333; /* 文字色をダークに */
+}
+
+@media (max-width: 768px) {
+  .App-video, .App-caption {
+    width: 90%;
+  }
+}
